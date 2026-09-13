@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (NestJS + Prisma)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: insurtech
+          POSTGRES_PASSWORD: insurtech
+          POSTGRES_DB: insurtech_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U insurtech"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://insurtech:insurtech@localhost:5432/insurtech_test?schema=public
+      JWT_SECRET: ci-test-secret-do-not-use-in-prod
+      JWT_EXPIRES_IN: 1h
+      PORT: 3000
+      DEMO_USER_EMAIL: demo@libelulasoft.com
+      DEMO_USER_PASSWORD: Demo1234!
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies (root workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter backend prisma:generate
+
+      - name: Apply migrations
+        run: pnpm --filter backend prisma:migrate:deploy
+
+      - name: Lint
+        run: pnpm --filter backend lint
+
+      - name: Test
+        run: pnpm --filter backend test
+
+      - name: Build
+        run: pnpm --filter backend build
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies (root workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter frontend lint
+
+      - name: Test
+        run: pnpm --filter frontend test
+
+      - name: Build
+        run: pnpm --filter frontend build
+
+  ci:
+    name: CI gate
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - name: All checks passed
+        run: echo "backend and frontend jobs succeeded"

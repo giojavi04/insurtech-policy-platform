@@ -1,0 +1,22 @@
+{
+  "name": "insurtech-policy-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LibelulaSoft Tech Lead take-home: Insurtech Quote & Bind platform (NestJS + Next.js monorepo).",
+  "scripts": {
+    "lint": "pnpm --filter backend lint && pnpm --filter frontend lint",
+    "test": "pnpm --filter backend test && pnpm --filter frontend test",
+    "test:backend": "pnpm --filter backend test",
+    "test:frontend": "pnpm --filter frontend test",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "prisma:generate": "pnpm --filter backend prisma generate",
+    "prisma:migrate": "pnpm --filter backend prisma migrate dev",
+    "prisma:seed": "pnpm --filter backend prisma db seed"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@12.4.1+sha512.2e81e399d73fe8390dab25e06aa788ab7a5908248d2f5a370f82b481147a6a7a367bf8048f9a6fdb6460f21a66f0542dedb8b94ca2c8723596741920b1656d4c"
+}

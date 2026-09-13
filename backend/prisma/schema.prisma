@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model InsuranceType {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  coverages Coverage[]
+  quotes    Quote[]
+}
+
+model Coverage {
+  id   String @id @default(uuid())
+  code String
+  name String
+
+  insuranceTypeId String
+  insuranceType   InsuranceType @relation(fields: [insuranceTypeId], references: [id])
+
+  quotes Quote[]
+
+  // One index doubles as both "coverage belongs to this type" (dependency)
+  // and "this exact code is valid for this type" (membership check).
+  @@unique([insuranceTypeId, code])
+}
+
+model Location {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  quotes Quote[]
+}
+
+model Quote {
+  id String @id @default(uuid())
+
+  insuranceTypeId String
+  coverageId      String
+  locationId      String
+
+  insuranceType InsuranceType @relation(fields: [insuranceTypeId], references: [id])
+  coverage      Coverage      @relation(fields: [coverageId], references: [id])
+  location      Location      @relation(fields: [locationId], references: [id])
+
+  age              Int
+  estimatedPremium Decimal @db.Decimal(10, 2)
+
+  // [{concept, amount}] snapshot — an immutable audit trail of the rates
+  // applied at quote time, so GET /quotes/{id} always replays the exact
+  // original amounts even if the rating tables change later.
+  breakdown Json
+
+  status    String @default("QUOTED")
+  createdAt DateTime    @default(now())
+
+  policy Policy?
+}
+
+model Policy {
+  id String @id @default(uuid())
+
+  // DB-level guarantee that a quote can only ever be bound once
+  // (design decision D3), race-safe under concurrent POST /policies calls.
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  status    String @default("ACTIVE")
+  issuedAt  DateTime     @default(now())
+  createdAt DateTime     @default(now())
+}
+
+model User {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+
+  createdAt DateTime @default(now())
+}

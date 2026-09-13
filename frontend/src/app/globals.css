@@ -1,0 +1,191 @@
+/* Tailwind v4: no hay tailwind.config.ts — cada token de abajo es nativo
+   de CSS. source("../") fija la detección de contenido en frontend/src de
+   forma explícita (este archivo vive en src/app/globals.css) en lugar de
+   depender de la auto-detección, algo importante en un monorepo donde
+   backend/ es un directorio hermano. */
+@import 'tailwindcss' source('../');
+
+/**
+ * Tokens de fintech seguro: marca verde azulado profundo sobre una superficie
+ * lavanda/blanca. Cada entrada `--color-*`/`--font-*`/`--radius-*`/
+ * `--shadow-*`/`--animate-*` es una variable de tema de Tailwind v4: definirla
+ * aquí es lo que hace que utilidades como `bg-paper`, `text-ink-soft`,
+ * `border-line`, `font-display`, `rounded-card`, `shadow-soft` y
+ * `animate-fade-in` existan, sin un archivo de configuración aparte.
+ *
+ * Todo token que necesita transparencia lleva su propio rgba integrado, nunca
+ * un modificador de opacidad de Tailwind (`bg-brand/10`): los tokens de color
+ * son valores planos aquí (no una indirección `var()` a través de un archivo
+ * de configuración), pero el modificador aun así no puede sintetizar alfa en
+ * un token que ya es un hex sólido.
+ */
+@theme {
+  /* surfaces */
+  --color-paper: #f7f6fc;
+  --color-paper-raised: #ffffff;
+  --color-lav: #efeef9;
+  --color-lav-deep: #e4e2f2;
+  /* text */
+  --color-ink: #14161c;
+  --color-ink-soft: #676c7c;
+  /* brand */
+  --color-brand: #245c61;
+  --color-brand-deep: #1b4a4e;
+  --color-brand-tint: rgba(36, 92, 97, 0.1);
+  /* status */
+  --color-ok: #0c7852;
+  --color-ok-soft: #d6f2e0;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fbe7e5;
+  /* structure */
+  --color-line: rgba(20, 22, 28, 0.08);
+  --color-overlay: rgba(20, 22, 28, 0.45);
+
+  /* tipografía — los nombres reales de la familia viven en <html> como
+     --font-*-family, definidos por next/font en layout.tsx; se mantienen
+     distintos de estas claves de tema para que no choquen entre sí (ver
+     layout.tsx para explicar por qué). */
+  --font-display: var(--font-display-family), ui-sans-serif, sans-serif;
+  --font-sans: var(--font-body-family), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-mono-family), ui-monospace, monospace;
+
+  /* forma */
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill: 9999px;
+
+  /* sombra suave y difusa de tarjeta/botón — nunca un desplazamiento duro */
+  --shadow-soft: 0 1px 2px rgba(20, 22, 28, 0.04), 0 8px 24px rgba(20, 22, 28, 0.06);
+  --shadow-lift: 0 2px 4px rgba(20, 22, 28, 0.05), 0 16px 40px rgba(20, 22, 28, 0.09);
+
+  /* movimiento de entrada */
+  --animate-fade-in: fade-in 260ms ease-out both;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  --animate-rise-in: rise-in 320ms ease-out both;
+  @keyframes rise-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  --animate-pop-in: pop-in 240ms ease-out both;
+  @keyframes pop-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* Acentos de blob decorativos — propiedades personalizadas simples, no
+   variables de tema: respaldan una imagen de fondo CSS cruda debajo, no una
+   utilidad de Tailwind. */
+:root {
+  --blob-blue: rgba(178, 214, 238, 0.55);
+  --blob-mint: rgba(186, 228, 202, 0.45);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Acentos de blob lavanda/azul/mint difuminados. CSS puro: un degradado
+     radial que se desvanece en transparencia ya es difuso, así que no hace
+     falta una capa `filter: blur()` (un coste innecesario de composición a
+     toda pantalla). */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(48rem 42rem at 8% 18%, var(--blob-blue), transparent 68%),
+      radial-gradient(46rem 40rem at 94% 82%, var(--blob-mint), transparent 66%);
+  }
+}
+
+@layer utilities {
+  /* Las cifras monetarias y los identificadores no deben desplazar la
+     anchura de un dígito a otro. */
+  .nums-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* El contenido solo para impresión (encabezado compacto, digest completo)
+     permanece oculto en pantalla; el @media print de abajo lo vuelve a
+     mostrar. */
+  .print-only {
+    display: none;
+  }
+
+  .digest-full {
+    display: none;
+  }
+}
+
+/**
+ * Movimiento reducido: neutraliza las transiciones a nivel global. Las
+ * animaciones con keyframes se excluyen individualmente mediante la variante
+ * `motion-reduce:` de Tailwind para que las entradas de animación pasen a un
+ * tratamiento solo de opacidad en lugar de desaparecer.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  body::before {
+    display: none !important;
+  }
+  .card-print {
+    box-shadow: none !important;
+    border: 1px solid #d7d7de !important;
+    break-inside: avoid;
+  }
+  .digest-trunc {
+    display: none !important;
+  }
+  .digest-full {
+    display: inline !important;
+  }
+}
